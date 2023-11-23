@@ -1,10 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('formations')
 export class Formation {
@@ -13,6 +7,4 @@ export class Formation {
 
   @Column()
   name: string;
-
-  // Weitere Spalten und Beziehungen...
 }

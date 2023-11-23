@@ -21,6 +21,4 @@ export class GameFormationsPosition {
 
   @Column()
   shirtnumber: number;
-
-  // Weitere Spalten und Beziehungen...
 }

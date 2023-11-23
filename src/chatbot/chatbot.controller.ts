@@ -1,11 +1,11 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import {Controller, Delete, Get, Post, Query} from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
 
 @Controller('chatbot')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
-  @Get()
+  @Get('games')
   askChatbot(): Promise<any> {
     return this.chatbotService.GamesInContest(236);
   }
@@ -28,5 +28,14 @@ export class ChatbotController {
   @Get('formation')
   formation(): Promise<any> {
     return this.chatbotService.findFormation(236);
+  }
+
+  @Post("excel")
+  createExcel() {
+    return this.chatbotService.createExcelFile();
+  }
+  @Delete("excel")
+    deleteExcel() {
+        return this.chatbotService.deleteExcelFile();
   }
 }

@@ -33,6 +33,4 @@ export class GameFormation {
 
   @Column()
   formation_type: string;
-
-  // Weitere Spalten und Beziehungen...
 }

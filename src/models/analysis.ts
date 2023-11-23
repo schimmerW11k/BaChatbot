@@ -23,6 +23,4 @@ export class Analysis {
 
   @OneToMany(() => AnalysisEvent, (ae) => ae.analysis)
   analysisEvents: AnalysisEvent[];
-
-  // Weitere Spalten ...
 }

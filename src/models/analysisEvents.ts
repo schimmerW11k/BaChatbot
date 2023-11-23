@@ -1,9 +1,7 @@
 import {
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -22,6 +20,4 @@ export class AnalysisEvent {
   @OneToOne(() => AnalysisEventLabel)
   @JoinColumn({ name: 'id' })
   label: AnalysisEventLabel;
-
-  // Weitere Spalten ...
 }

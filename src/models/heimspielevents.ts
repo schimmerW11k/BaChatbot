@@ -16,13 +16,7 @@ export class HeimspielEvent {
   game_id: number;
 
   @Column()
-  team_id: number;
-
-  @Column()
   team_type: string;
-
-  @Column()
-  person_id: number;
 
   @Column()
   name: string;

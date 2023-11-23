@@ -7,5 +7,4 @@ export class Team {
 
   @Column()
   name: string;
-
 }
