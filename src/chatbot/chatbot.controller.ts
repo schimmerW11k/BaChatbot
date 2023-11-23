@@ -34,8 +34,8 @@ export class ChatbotController {
   createExcel() {
     return this.chatbotService.createExcelFile();
   }
-  @Delete("excel")
+  @Delete("deleteFiles")
     deleteExcel() {
-        return this.chatbotService.deleteExcelFile();
+        return this.chatbotService.deleteFiles();
   }
 }

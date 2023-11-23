@@ -43,9 +43,7 @@ export class ChatbotService {
       .where('g.contest_id = :contestId', { contestId })
       .getRawMany();
 
-/*
     this.writeCsvFile(data,"Games");
-*/
     //this.deleteCsvFile("Games");
     return data;
   }
@@ -68,9 +66,7 @@ export class ChatbotService {
       .where('g.contest_id = :contestId', { contestId })
       .getRawMany();
 
-/*
     this.writeCsvFile(data,"SpielEvents");
-*/
     //this.deleteCsvFile("SpielEvents");
     return data;
   }
@@ -91,9 +87,7 @@ export class ChatbotService {
       .where('g.contest_id = :contestId', { contestId })
       .getRawMany();
 
-/*
     this.writeCsvFile(data,"Analysis");
-*/
     //this.deleteCsvFile("Analysis");
     return data;
   }
@@ -114,7 +108,7 @@ export class ChatbotService {
       .where('c.id = :contestId', { contestId })
       .getRawOne();
 
-/*    this.writeCsvFile([data],"Contest");*/
+    this.writeCsvFile([data],"Contest");
     //this.deleteCsvFile("Contest");
     return data;
   }
@@ -135,11 +129,18 @@ export class ChatbotService {
       .where('g.contest_id = :contestId', { contestId })
       .getRawMany();
 
-/*
     this.writeCsvFile(data,"FormationAndPositions");
-*/
     //this.deleteCsvFile("FormationAndPositions");
     return data;
+  }
+
+  async deleteFiles() {
+    this.deleteCsvFile("Games");
+    this.deleteCsvFile("SpielEvents");
+    this.deleteCsvFile("Analysis");
+    this.deleteCsvFile("Contest");
+    this.deleteCsvFile("FormationAndPositions");
+    this.deleteExcelFile();
   }
 
   writeCsvFile(data: any, filename: string) {
