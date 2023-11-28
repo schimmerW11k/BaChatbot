@@ -9,10 +9,15 @@ import { GameFormation } from '../models/gameformations';
 import * as Papa from 'papaparse';
 import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
+import OpenAI from "openai";
+import {GettingDataService} from "./gettingData.service";
+
 
 
 @Injectable()
 export class ChatbotService {
+
+
   constructor(
     @InjectRepository(Game)
     private gameRepository: Repository<Game>,
@@ -24,124 +29,184 @@ export class ChatbotService {
     private contestRepository: Repository<Contest>,
     @InjectRepository(GameFormation)
     private gameFormationRepository: Repository<GameFormation>,
-  ) {}
+    private getDataService: GettingDataService,
+  ) {
 
-  async GamesInContest(contestId: number): Promise<any> {
-    const data = await this.gameRepository
-      .createQueryBuilder('g')
-      .innerJoin('g.homeTeam', 'ht')
-      .innerJoin('g.awayTeam', 'at')
-      .select([])
-      .addSelect('g.id', 'gameId') //.addSelect('g.contest_id', 'contestId')
-      .addSelect('ht.name', 'Heimteam')
-      .addSelect('at.name', 'Auswärtsteam')
-      .addSelect('g.score_home', 'homeScore')
-      .addSelect('g.score_away', 'awayScore')
-      .addSelect('g.spieltag', 'Spieltag')
-      .addSelect('g.game_date', 'gameDate')
-      .addSelect('g.venue', 'Stadion')
-      .where('g.contest_id = :contestId', { contestId })
-      .getRawMany();
-
-    this.writeCsvFile(data,"Games");
-    //this.deleteCsvFile("Games");
-    return data;
   }
 
-  async heimspiel(contestId: number): Promise<any> {
-    const data = await this.heimspielEventRepository
-      .createQueryBuilder('he')
-      .innerJoin('he.game', 'g')
-      .select([])
-      .addSelect('he.id', 'eventId')
-      .addSelect('he.game_id', 'gameId')
-      .addSelect('he.team_type', 'teamType')
-      .addSelect('he.name', 'SpielerName')
-      .addSelect('he.shirtnumber', 'shirtNumber')
-      .addSelect('he.minute', 'Minute')
-      .addSelect('he.action', 'Action')
-      .addSelect('he.kind', 'Kind')
-      .addSelect('he.rolename', 'roleName')
-      .addSelect('he.shortrolename', 'shortRoleName')
-      .where('g.contest_id = :contestId', { contestId })
-      .getRawMany();
+  private secretKey = process.env.OPENAI_API_KEY;
+  private openai = new OpenAI({
+    apiKey: this.secretKey,
+  });
+  private thread = null;
+  private file1;
+  //private file2;
+  private file3;
+  private file4;
+  private file5;
 
-    this.writeCsvFile(data,"SpielEvents");
-    //this.deleteCsvFile("SpielEvents");
-    return data;
+  assistantID = 'asst_aHGk5jqfUHrbej99Z0lYV5tn';
+
+  async activateChatbot(contestID: number): Promise<string> {
+    await this.createFilesforChatbot(contestID);
+
+    this.file1 = await this.openai.files.create({
+      file: fs.createReadStream("src/csv-files/FormationAndPositions.csv"),
+      purpose: "assistants",
+    });
+    /*this.file2 = await  this.openai.files.create({
+      file: fs.createReadStream("src/csv-files/Contest.csv"),
+      purpose: "assistants",
+    });*/
+    this.file3 = await this.openai.files.create({
+      file: fs.createReadStream("src/csv-files/Games.csv"),
+      purpose: "assistants",
+    });
+    this.file4 = await this.openai.files.create({
+      file: fs.createReadStream("src/csv-files/Analysis.csv"),
+      purpose: "assistants",
+    });
+    this.file5 = await this.openai.files.create({
+      file: fs.createReadStream("src/csv-files/SpielEvents.csv"),
+      purpose: "assistants",
+    });
+
+    this.thread = await this.openai.beta.threads.create({
+      messages: [
+        {
+          "role": "user",
+          "content": "Hier sind die Daten für den Contest: "+
+              "    HalftimeDuration: 45," +
+              "    OvertimeDuration: 15," +
+              "    ContestName: 3.Liga," +
+              "    Saison: 21-22," +
+              "    Verband: Deutscher Fußball-Bund," +
+              "    Land: DE",
+          "file_ids": [this.file1.id, /*this.file2.id,*/ this.file3.id, this.file4.id, this.file5.id],
+        }
+      ],
+    });
+
+
+    return `Chatbot aktiviert ${contestID}`;
   }
 
-  async findAnalysisByContestId(contestId: number): Promise<any> {
-    const data = await this.analysisRepository
-      .createQueryBuilder('a')
-      .innerJoin('a.game', 'g')
-      .innerJoin('a.analysisEvents', 'ae')
-      .innerJoin('ae.label', 'ael')
-      .select([]) //.addSelect('ae.id', 'analysisEventId').addSelect('a.id', 'analysisId')
-      .addSelect('a.game_id', 'gameId')
-      .addSelect('ae.start', 'eventStartInSekunden')
-      .addSelect('ae.end', 'eventEndInSekunden') //.addSelect('ae.halbzeit', 'halfTime')
-      .addSelect('ae.team', 'team_type')
-      .addSelect('ae.code', 'Code')
-      .addSelect('ael.label', 'Label')
-      .where('g.contest_id = :contestId', { contestId })
-      .getRawMany();
 
-    this.writeCsvFile(data,"Analysis");
-    //this.deleteCsvFile("Analysis");
-    return data;
+ async processMessage(message: string) {
+
+   this.openai.beta.threads.messages.create(this.thread.id, {
+     role: "user",
+     content: message,
+   });
+
+   // Use runs to wait for the assistant response and then retrieve it
+   const run = await this.openai.beta.threads.runs.create(this.thread.id, {
+     assistant_id: this.assistantID,
+   });
+
+   let runStatus = await this.openai.beta.threads.runs.retrieve(
+       this.thread.id,
+       run.id
+   );
+
+   // Polling mechanism to see if runStatus is completed
+   // This should be made more robust.
+   while (runStatus.status !== "completed") {
+     await new Promise((resolve) => setTimeout(resolve, 2000));
+     runStatus = await this.openai.beta.threads.runs.retrieve(this.thread.id, run.id);
+   }
+
+   // Get the last assistant message from the messages array
+   const chatbotMessages = await this.openai.beta.threads.messages.list(this.thread.id);
+
+   // Find the last message for the current run
+   const lastMessageForRun: any = chatbotMessages.data
+       .filter(
+           (message) => message.run_id === run.id && message.role === "assistant"
+       )
+       .pop();
+
+   let chatbotResponse;
+   // If an assistant message is found, console.log() it
+   if (lastMessageForRun) {
+     chatbotResponse = lastMessageForRun.content[0].text.value;
+     console.log(`${lastMessageForRun.content[0].text.value} \n`);
+   }
+
+
+   return `Chatbot Antwort: ${chatbotResponse}`;
   }
 
-  async findContest(contestId: number): Promise<any> {
-    const data = await this.contestRepository
-      .createQueryBuilder('c')
-      .innerJoin('c.season', 's')
-      .innerJoin('c.federation', 'f')
-      .innerJoin('f.country', 'c2') //.addSelect('c.id', 'Contest_ID')
-      .select([])
-      .addSelect('f.name', 'Verband')
-      .addSelect('c2.name', 'Land') //.addSelect('s.id', 'season_id')
-      .addSelect('s.name', 'Saison')
-      .addSelect('c.halftime_duration', 'HalftimeDuration')
-      .addSelect('c.overtime_duration', 'OvertimeDuration')
-      .addSelect('c.name', 'ContestName')
-      .where('c.id = :contestId', { contestId })
-      .getRawOne();
 
-    this.writeCsvFile([data],"Contest");
-    //this.deleteCsvFile("Contest");
-    return data;
+
+
+  async closeChatbot(): Promise<string> {
+    const response = await this.openai.beta.threads.del(this.thread.id);
+    this.thread = null;
+    await this.deleteFiles();
+    console.log(response);
+    const del = await this.openai.files.del(this.file1.id)
+   // const del2 = await this.openai.files.del(this.file2.id)
+    const del3 = await this.openai.files.del(this.file3.id)
+    const del4 = await this.openai.files.del(this.file4.id)
+    const del5 = await this.openai.files.del(this.file5.id)
+    return `Chatbot geschlossen`;
   }
 
-  async findFormation(contestId: number): Promise<any> {
-    const data = await this.gameFormationRepository
-      .createQueryBuilder('gf')
-      .innerJoin('gf.formation', 'f')
-      .innerJoin('gf.game', 'g')
-      .innerJoin('gf.gameFormationsPositions', 'gfp')
-      .select([]) //.addSelect('gf.id', 'gameFormationId')
-      .addSelect('gf.game_id', 'gameId')
-      .addSelect('f.name', 'formationName')
-      .addSelect('gf.team_type', 'teamType')
-      .addSelect('gf.formation_type', 'formationType')
-      .addSelect('gfp.position', 'position')
-      .addSelect('gfp.shirtnumber', 'shirtNumber')
-      .where('g.contest_id = :contestId', { contestId })
-      .getRawMany();
 
-    this.writeCsvFile(data,"FormationAndPositions");
-    //this.deleteCsvFile("FormationAndPositions");
-    return data;
+  async MessagesInThread(): Promise<any> {
+    const messages = await this.openai.beta.threads.messages.list(this.thread.id);
+    console.log(messages);
+    return messages;
   }
 
+
+
+
+  //Handle Files
   async deleteFiles() {
     this.deleteCsvFile("Games");
     this.deleteCsvFile("SpielEvents");
     this.deleteCsvFile("Analysis");
-    this.deleteCsvFile("Contest");
+   // this.deleteCsvFile("Contest");
     this.deleteCsvFile("FormationAndPositions");
-    this.deleteExcelFile();
+   // this.deleteExcelFile();
   }
+
+  csvFiles: string[] = ["Games", "SpielEvents", "Analysis", "Contest", "FormationAndPositions"];
+
+  async createFilesforChatbot(contestID: number) {
+
+ /*   const tasks = [
+      { func: async () => await this.getDataService.getGames(contestID), filename: this.csvFiles[0] },
+      { func: async () => await this.getDataService.getHeimspielEvents(contestID), filename: this.csvFiles[1] },
+      { func: async () => await this.getDataService.getAnalysisEvents(contestID), filename: this.csvFiles[2] },
+      { func: async () => await this.getDataService.getContest(contestID), filename: this.csvFiles[3] },
+      { func: async() => await this.getDataService.getFormation(contestID), filename: this.csvFiles[4] }
+    ];
+
+
+    for (const task of tasks) {
+      const data = await task.func();
+      this.writeCsvFile(data, task.filename);
+    }
+*/
+
+
+    const gamesData = await this.getDataService.getGames(contestID);
+    const heimspielData = await this.getDataService.getHeimspielEvents(contestID);
+    const analysisData = await this.getDataService.getAnalysisEvents(contestID);
+    //const contestData = await this.getDataService.getContest(contestID);
+    const formationAndPositionsData = await this.getDataService.getFormation(contestID);
+
+    this.writeCsvFile(gamesData, "Games");
+    this.writeCsvFile(heimspielData, "SpielEvents");
+    this.writeCsvFile(analysisData, "Analysis");
+   // this.writeCsvFile([contestData], "Contest");
+    this.writeCsvFile(formationAndPositionsData, "FormationAndPositions");
+
+  }
+
 
   writeCsvFile(data: any, filename: string) {
     try {
@@ -162,15 +227,14 @@ export class ChatbotService {
     }
   }
 
-
     async createExcelFile(): Promise<string> {
       const workbook = new ExcelJS.Workbook();
 
-      const contestData = await this.findContest(236);
-      const analysisData = await this.findAnalysisByContestId(236);
-      const formationData = await this.findFormation(236);
-      const gameData = await this.GamesInContest(236);
-      const heimspielData = await this.heimspiel(236);
+      const contestData = await this.getDataService.getContest(236);
+      const analysisData = await this.getDataService.getAnalysisEvents(236);
+      const formationData = await this.getDataService.getFormation(236);
+      const gameData = await this.getDataService.getGames(236);
+      const heimspielData = await this.getDataService.getHeimspielEvents(236);
 
       this.addWorksheet(workbook, [contestData], 'Contest');
       this.addWorksheet(workbook, analysisData, 'Analysis');
@@ -178,7 +242,7 @@ export class ChatbotService {
       this.addWorksheet(workbook, gameData, 'Game');
       this.addWorksheet(workbook, heimspielData, 'Heimspiel');
 
-      await workbook.xlsx.writeFile('src/csv-files/Fußballdatentabellen.xlsx');
+      await workbook.xlsx.writeFile('src/csv-files/Fussballdatentabellen.xlsx');
       console.log('Excel-Datei mit mehreren Tabellen erstellt');
       return 'Excel-Datei mit mehreren Tabellen erstellt';
 
@@ -200,7 +264,7 @@ export class ChatbotService {
 
   deleteExcelFile() {
     try {
-      fs.unlinkSync(`src/csv-files/Fußballdatentabellen.xlsx`);
+      fs.unlinkSync(`src/csv-files/Fussballdatentabellen.xlsx`);
       console.log(`Die Datei wurde erfolgreich gelöscht.`);
     } catch (err) {
       console.error(`Fehler beim Löschen der Datei:`, err);

@@ -16,6 +16,7 @@ import { Country } from './models/countries';
 import { Formation } from './models/formations';
 import { GameFormation } from './models/gameformations';
 import { GameFormationsPosition } from './models/gameFormationPosition';
+import OpenAI from "openai";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { GameFormationsPosition } from './models/gameFormationPosition';
 
       synchronize: false,
     }),
+      OpenAI
   ],
   controllers: [AppController],
   providers: [AppService],

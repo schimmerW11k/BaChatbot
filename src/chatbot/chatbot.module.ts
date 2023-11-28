@@ -15,12 +15,13 @@ import {Country} from "../models/countries";
 import {Formation} from "../models/formations";
 import {GameFormation} from "../models/gameformations";
 import {GameFormationsPosition} from "../models/gameFormationPosition";
+import {GettingDataService} from "./gettingData.service";
 
 @Module({
   imports: [TypeOrmModule.forFeature([Game, Team, HeimspielEvent, Analysis,
     AnalysisEvent, AnalysisEventLabel, Contest, Season, Federation, Country, Formation, GameFormation, GameFormationsPosition])],
   controllers: [ChatbotController],
-  providers: [ChatbotService],
+  providers: [ChatbotService, GettingDataService],
 })
 export class ChatbotModule {
 }
