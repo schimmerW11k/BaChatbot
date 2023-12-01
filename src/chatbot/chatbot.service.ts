@@ -11,6 +11,8 @@ import * as fs from 'fs';
 import * as ExcelJS from 'exceljs';
 import OpenAI from "openai";
 import {GettingDataService} from "./gettingData.service";
+import {testData} from "./test";
+import * as XLSX from 'xlsx';
 
 
 
@@ -39,6 +41,8 @@ export class ChatbotService {
     apiKey: this.secretKey,
   });
   private thread = null;
+  private run = null;
+    private run2: string = "run_jWXEtb9JBzrOgieGxmzlklie";
   private file1;
   //private file2;
   private file3;
@@ -75,14 +79,13 @@ export class ChatbotService {
       messages: [
         {
           "role": "user",
-          "content": "Hier sind die Daten für den Contest: "+
-              "    HalftimeDuration: 45," +
-              "    OvertimeDuration: 15," +
-              "    ContestName: 3.Liga," +
-              "    Saison: 21-22," +
-              "    Verband: Deutscher Fußball-Bund," +
-              "    Land: DE",
-          "file_ids": [this.file1.id, /*this.file2.id,*/ this.file3.id, this.file4.id, this.file5.id],
+          "content": "Hier sind die CSV-Dateien für den Contest/Saison mit Folgenden Daten:  ContestName: 3.Liga, Saison: 21-22, Verband: Deutscher Fußball-Bund, Land: DE, Dauer jeder Halbzeit: 45, Nachspielzeitdauer: 15. Lade dir einmal alle Dateien um die Datenstruktur genau zu kennen. Die Namen von Teams oder Spielern die der Benutzer in seine Frage hat müssen nicht zu 100% mit denen in den Daten übereinstimmen. Wenn du eine Benutzerfrage beantwortest und mehrere Nachrichten abgibst sollte die letzte immer die Antwort der Benutzerfrage beinhalten\n" +
+              "\n" +
+              "Eine CSV-Datei „Games“ beinhaltet dabei alle Spiele der Saison. Folgende Spalten hat die Tabelle: GameID, homeScore, awayScore, Spieltag, gameDate, Stadion, Heimteam, Auswärtsteam\n" +
+              "Die andere CSV-Datei „SpielEvents“ ist über die GameID mit der Games-Tabelle verbunden. Hier werden alle groben Events die im Spiel passiert sind aufgelistet. Der TeamType sagt ob es ein „home“ oder „away“ Team ist. SpielerName und shirtNumber zeigen wer das Event ausgeführt hat. „Action“ und „Kind“ beschreiben dann des Event. „Action“ ist meisten „playing“, „goal“ oder „card“. Was für ein Tor, Karte oder Spielaktion es genau ist zeigt das „Kind“ an. \n" +
+              "Die andere CSV-Datei „Analysis“: Hat eine genauere Analyse zu dem Spiel. Verbunden ist das wieder mit der GameID zu einem bestimmten Spiel. Der TeamType sagt ob es das „Home“ oder „Away“ Team ist. „Code“ Sagt aus was passiert ist z.B. Ecke oder Spielaufbau und „Label“ beschreibt es genauer. \n" +
+              "Die andere CSV-Datei „FormationAndPosition“: Auch über die GameID mit einem Spielverbunden hat die Aufstellungen für die Teams wieder über den TeamType aber dazu auch die Position der Spieler mit der ShirtNumber diese kannst du zu den Spielern mit dem passenden Game und TeamType aus der SpielEvents-Tabelle verbinden.",
+          "file_ids": [this.file3.id, /*this.file2.id,*/ this.file1.id, this.file4.id, this.file5.id],
         }
       ],
     });
@@ -100,20 +103,31 @@ export class ChatbotService {
    });
 
    // Use runs to wait for the assistant response and then retrieve it
-   const run = await this.openai.beta.threads.runs.create(this.thread.id, {
+    this.run = await this.openai.beta.threads.runs.create(this.thread.id, {
      assistant_id: this.assistantID,
    });
 
    let runStatus = await this.openai.beta.threads.runs.retrieve(
        this.thread.id,
-       run.id
+       this.run.id
    );
 
    // Polling mechanism to see if runStatus is completed
    // This should be made more robust.
    while (runStatus.status !== "completed") {
+     console.log(`Run status is '${runStatus.status}'.`);
      await new Promise((resolve) => setTimeout(resolve, 2000));
-     runStatus = await this.openai.beta.threads.runs.retrieve(this.thread.id, run.id);
+     runStatus = await this.openai.beta.threads.runs.retrieve(
+         this.thread.id,
+         this.run.id
+     );
+
+     if (["failed", "cancelled", "expired"].includes(runStatus.status)) {
+       console.log(`Request: ${runStatus.status}`);
+       return `Request: ${runStatus.status}`;
+       break;
+     }
+
    }
 
    // Get the last assistant message from the messages array
@@ -122,9 +136,9 @@ export class ChatbotService {
    // Find the last message for the current run
    const lastMessageForRun: any = chatbotMessages.data
        .filter(
-           (message) => message.run_id === run.id && message.role === "assistant"
+           (message) => message.run_id === this.run.id && message.role === "assistant"
        )
-       .pop();
+       .shift() /*.pop();*/
 
    let chatbotResponse;
    // If an assistant message is found, console.log() it
@@ -155,8 +169,41 @@ export class ChatbotService {
 
 
   async MessagesInThread(): Promise<any> {
+/*
+
+    const messages = testData;
+
+    const lastMessageForRun: any = testData.messages.data
+        .filter(
+            (message) => message.run_id === this.run2 && message.role === "assistant"
+        )
+        .shift();
+
+    console.log(testData.messages.data[0].content[0].text.value);
+
+    return  lastMessageForRun;
+
+*/
+
     const messages = await this.openai.beta.threads.messages.list(this.thread.id);
-    console.log(messages);
+    const chatbotMessages = await this.openai.beta.threads.messages.list(this.thread.id);
+
+    // Find the last message for the current run
+    const lastMessageForRun: any = chatbotMessages.data
+        .filter(
+            (message) => message.run_id === this.run.id && message.role === "assistant"
+        )
+        .shift();
+
+    let chatbotResponse;
+    // If an assistant message is found, console.log() it
+    if (lastMessageForRun) {
+      chatbotResponse = lastMessageForRun.content[0].text.value;
+      console.log(`${lastMessageForRun.content[0].text.value} \n`);
+    }
+
+
+
     return messages;
   }
 
@@ -227,28 +274,57 @@ export class ChatbotService {
     }
   }
 
-    async createExcelFile(): Promise<string> {
+
+  async createExcelFile() {
+    const workbook = XLSX.utils.book_new();
+
+    const analysisData = await this.getDataService.getAnalysisEvents(236);
+    const formationData = await this.getDataService.getFormation(236);
+    const gameData = await this.getDataService.getGames(236);
+    const heimspielData = await this.getDataService.getHeimspielEvents(236);
+
+    this.addWorksheet(workbook, analysisData, 'Analysis');
+    this.addWorksheet(workbook, formationData, 'Formation');
+    this.addWorksheet(workbook, gameData, 'Game');
+    this.addWorksheet(workbook, heimspielData, 'Heimspiel');
+
+    XLSX.writeFile(workbook, 'src/csv-files/Fussballdatentabellen.xlsx');
+    console.log('Excel-Datei mit mehreren Tabellen erstellt');
+    return 'Excel-Datei mit mehreren Tabellen erstellt';
+  }
+
+
+  addWorksheet(workbook, data, sheetName) {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  }
+
+
+    async createExcelFile1(): Promise<string> {
       const workbook = new ExcelJS.Workbook();
 
-      const contestData = await this.getDataService.getContest(236);
+      //const contestData = await this.getDataService.getContest(236);
       const analysisData = await this.getDataService.getAnalysisEvents(236);
       const formationData = await this.getDataService.getFormation(236);
       const gameData = await this.getDataService.getGames(236);
       const heimspielData = await this.getDataService.getHeimspielEvents(236);
 
-      this.addWorksheet(workbook, [contestData], 'Contest');
+      //this.addWorksheet(workbook, [contestData], 'Contest');
       this.addWorksheet(workbook, analysisData, 'Analysis');
       this.addWorksheet(workbook, formationData, 'Formation');
       this.addWorksheet(workbook, gameData, 'Game');
+
       this.addWorksheet(workbook, heimspielData, 'Heimspiel');
 
+
       await workbook.xlsx.writeFile('src/csv-files/Fussballdatentabellen.xlsx');
+
       console.log('Excel-Datei mit mehreren Tabellen erstellt');
       return 'Excel-Datei mit mehreren Tabellen erstellt';
 
   }
 
-  addWorksheet(workbook: ExcelJS.Workbook, data: any, sheetName: string) {
+  addWorksheet1(workbook: ExcelJS.Workbook, data: any, sheetName: string) {
     const sheet = workbook.addWorksheet(sheetName);
 
     if (data.length > 0) {
