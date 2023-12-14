@@ -31,7 +31,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/chatbot/analysis",
+					"raw": "http://localhost:3000/chatbot/heimspiel",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -39,7 +39,7 @@
 					"port": "3000",
 					"path": [
 						"chatbot",
-						"analysis"
+						"heimspiel"
 					]
 				}
 			},
@@ -111,7 +111,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:3000/chatbot/excel",
+					"raw": "http://localhost:3000/chatbot/csv",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -119,7 +119,7 @@
 					"port": "3000",
 					"path": [
 						"chatbot",
-						"excel"
+						"csv"
 					]
 				}
 			},
@@ -169,15 +169,49 @@
 			"name": "Chatbot Aktivieren",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/activate/dd4a5b02-cf31-4fa8-be85-3ed147b6ae81",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"activate",
+						"dd4a5b02-cf31-4fa8-be85-3ed147b6ae81"
+					]
+				}
 			},
 			"response": []
 		},
 		{
 			"name": "Chatbot message",
 			"request": {
-				"method": "GET",
-				"header": []
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n \"text\": \"Wie ging das letzte Spiel aus\",\n \"sender\": \"user\",\n \"reply\": false,\n \"date\": \"2023-12-07T12:10:33.579Z\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/chatbot/message",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"message"
+					]
+				}
 			},
 			"response": []
 		},
@@ -185,15 +219,48 @@
 			"name": "Chatbot CLose",
 			"request": {
 				"method": "GET",
-				"header": []
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/close",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"close"
+					]
+				}
 			},
 			"response": []
 		},
 		{
 			"name": "Chatbot message Copy",
 			"request": {
-				"method": "GET",
-				"header": []
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n \"text\": \"Wie oft haben sie gewonne, Verloren und unentschieden gespielt?\",\n \"sender\":\"user\",\n \"reply\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3000/chatbot/message2",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"message2"
+					]
+				}
 			},
 			"response": []
 		},
