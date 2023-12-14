@@ -1,0 +1,221 @@
+{
+	"info": {
+		"_postman_id": "2bd4306c-2cd0-4048-841f-c084d011a426",
+		"name": "DieLigenChatbotBA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Games",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/games",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"games"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Heimspiel",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/analysis",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"analysis"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Analysis",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/analysis",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"analysis"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Contest",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/contest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"contest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FormationsAndPositions",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/formation",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"formation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "createCSV",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/excel",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"excel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "createExcel",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/excel",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"excel"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deleteFiles",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/deleteFiles",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"deleteFiles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Chatbot Aktivieren",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Chatbot message",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Chatbot CLose",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Chatbot message Copy",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Chatbot trheadsmessage",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3000/chatbot/thread",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3000",
+					"path": [
+						"chatbot",
+						"thread"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
