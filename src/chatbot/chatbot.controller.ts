@@ -1,6 +1,6 @@
-import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query} from '@nestjs/common';
+import {Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ChatbotService } from './chatbot.service';
-import {CreateMessage} from "../models/message";
+import { MessageEntity } from "../models/message";
 import {GettingDataService} from "./gettingData.service";
 
 @Controller('chatbot')
@@ -10,15 +10,16 @@ export class ChatbotController {
   ) {}
 
 
+  //Endpoints for chatbot-logic
   @Get('activate/:contestID')
-  activateChatobt(@Param('contestID') contestID: number): Promise<string> {
-    return  this.chatbotService.activateChatbot(contestID);
+  activateChatbot(@Param('contestID') contestUuid: string): Promise<string> {
+    return  this.chatbotService.activateChatbot(contestUuid);
   }
 
   @Post('/message')
   @HttpCode(HttpStatus.OK)
-  sendMessage(@Body() message: CreateMessage) {
-    return this.chatbotService.processMessage(message.message);
+  sendMessage(@Body() message: MessageEntity): Promise<MessageEntity | string> {
+    return this.chatbotService.processMessage(message);
   }
 
   @Get('/close')
@@ -29,13 +30,20 @@ export class ChatbotController {
 
 
 
-  //test Endpoints for chatbot
+  //Dev Endpoints for Chatbot
   @Get('thread')
   getMessagesInThread(): Promise<any> {
     return this.chatbotService.MessagesInThread();
   }
 
-  //Handle Data Endpoints only for Development
+  @Post('message2')
+  @HttpCode(HttpStatus.OK)
+  sendMessage2(@Body() message: MessageEntity) {
+    return message;
+  }
+
+
+  //Data Endpoints only for Development
   @Get('games')
   askChatbot(): Promise<any> {
     return this.getDataService.getGames(236);
@@ -63,7 +71,7 @@ export class ChatbotController {
 
 
 
-  //Handle Files Endpoints. Only for Development
+  //Files Endpoints. Only for Development
   @Post("csv")
   createCSV() {
     return this.chatbotService.createFilesforChatbot(236);

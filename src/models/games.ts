@@ -17,6 +17,9 @@ export class Game {
   @Column()
   contest_id: number;
 
+  @Column()
+  uuid: string;
+
   @ManyToOne(() => Team)
   @JoinColumn({ name: 'home_team_id' })
   homeTeam: Team;
