@@ -33,15 +33,19 @@ export class ChatbotService {
 
     async activateChatbot(contestUuid: string): Promise<string> {
         const contestID = await this.getDataService.getContestID(contestUuid);
+        const contestInfor = await this.getDataService.getContest(contestID);
         await this.createFilesforChatbot(contestID);
         console.log(contestID)
+        console.log(contestInfor)
         await this.createFilesForOpenAI();
 
+
+        //Contest Infors noch Variable eintragen
         this.thread = await this.openai.beta.threads.create({
             messages: [
                 {
                     "role": "user",
-                    "content": "Hier sind die CSV-Dateien für den Contest/Saison mit Folgenden Daten:  ContestName: 3.Liga, Saison: 21-22, Verband: Deutscher Fußball-Bund, Land: DE, Dauer jeder Halbzeit: 45, Nachspielzeitdauer: 15. Lade dir einmal alle Dateien um die Datenstruktur genau zu kennen. Die Namen von Teams oder Spielern die der Benutzer in seine Frage hat müssen nicht zu 100% mit denen in den Daten übereinstimmen. Wenn du eine Benutzerfrage beantwortest und mehrere Nachrichten abgibst sollte die letzte immer die Antwort der Benutzerfrage beinhalten\n" +
+                    "content": `Hier sind die CSV-Dateien für den Contest/Saison mit Folgenden Daten:  ContestName: ${contestInfor.ContestName}, Saison: ${contestInfor.Saison}, Verband: ${contestInfor.Verband}, Land: ${contestInfor.Land}, Dauer jeder Halbzeit: ${contestInfor.HalftimeDuration}, Nachspielzeitdauer: ${contestInfor.OvertimeDuration}. Lade dir einmal alle Dateien um die Datenstruktur genau zu kennen. Die Namen von Teams oder Spielern die der Benutzer in seine Frage hat müssen nicht zu 100% mit denen in den Daten übereinstimmen. Wenn du eine Benutzerfrage beantwortest und mehrere Nachrichten abgibst sollte die letzte immer die Antwort der Benutzerfrage beinhalten\n` +
                         "\n" +
                         "Eine CSV-Datei „Games“ beinhaltet dabei alle Spiele der Saison. Folgende Spalten hat die Tabelle: GameID, homeScore, awayScore, Spieltag, gameDate, Stadion, Heimteam, Auswärtsteam\n" +
                         "Die andere CSV-Datei „SpielEvents“ ist über die GameID mit der Games-Tabelle verbunden. Hier werden alle groben Events die im Spiel passiert sind aufgelistet. Der TeamType sagt ob es ein „home“ oder „away“ Team ist. SpielerName und shirtNumber zeigen wer das Event ausgeführt hat. „Action“ und „Kind“ beschreiben dann des Event. „Action“ ist meisten „playing“, „goal“ oder „card“. Was für ein Tor, Karte oder Spielaktion es genau ist zeigt das „Kind“ an. \n" +
